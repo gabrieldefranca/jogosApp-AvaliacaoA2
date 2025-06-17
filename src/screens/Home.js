@@ -8,7 +8,13 @@ import {
   Keyboard,
   Animated,
 } from 'react-native';
-import { Card, Button, ActivityIndicator, Text, IconButton } from 'react-native-paper';
+import {
+  Card,
+  Button,
+  ActivityIndicator,
+  Text,
+  IconButton,
+} from 'react-native-paper';
 import { fetchGames } from '../api/rawg';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -21,23 +27,32 @@ export default function Home({ navigation }) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const listRef = useRef(null);
 
-  const loadGames = useCallback(async (searchTerm = '') => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await fetchGames(searchTerm);
-      setGames(data);
-      Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }).start();
-      listRef.current?.scrollToOffset({ offset: 0, animated: true });
-    } catch {
-      setError('Erro ao buscar jogos');
-      setGames([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [fadeAnim]);
+  const loadGames = useCallback(
+    async (searchTerm = '') => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await fetchGames(searchTerm);
+        setGames(data);
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }).start();
+        listRef.current?.scrollToOffset({ offset: 0, animated: true });
+      } catch {
+        setError('Erro ao buscar jogos');
+        setGames([]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [fadeAnim]
+  );
 
-  useEffect(() => { loadGames(); }, [loadGames]);
+  useEffect(() => {
+    loadGames();
+  }, [loadGames]);
 
   useEffect(() => {
     const timer = setTimeout(() => loadGames(query), 500);
@@ -45,33 +60,39 @@ export default function Home({ navigation }) {
   }, [query, loadGames]);
 
   const addToFavorites = async (game) => {
-    Alert.alert(
-      'Adicionar aos Favoritos',
-      `Adicionar "${game.name}"?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Sim',
-          onPress: async () => {
-            setAddingFavId(game.id);
-            try {
-              const favs = await AsyncStorage.getItem('favorites');
-              const favsParsed = favs ? JSON.parse(favs) : [];
-              if (favsParsed.some(item => item.id === game.id)) {
-                Alert.alert('Aviso', 'Jogo já está nos favoritos!');
-                return;
-              }
-              await AsyncStorage.setItem('favorites', JSON.stringify([...favsParsed, game]));
-              Alert.alert('Sucesso', 'Jogo adicionado aos favoritos!');
-            } catch {
-              Alert.alert('Erro', 'Não foi possível adicionar aos favoritos.');
-            } finally {
-              setAddingFavId(null);
+    Alert.alert('Adicionar aos Favoritos', `Adicionar "${game.name}"?`, [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Sim',
+        onPress: async () => {
+          setAddingFavId(game.id);
+          try {
+            const favs = await AsyncStorage.getItem('favorites');
+            const favsParsed = favs ? JSON.parse(favs) : [];
+            if (favsParsed.some((item) => item.id === game.id)) {
+              Alert.alert('Aviso', 'Jogo já está nos favoritos!');
+              return;
             }
-          },
+            await AsyncStorage.setItem(
+              'favorites',
+              JSON.stringify([...favsParsed, game])
+            );
+            Alert.alert('Sucesso', 'Jogo adicionado aos favoritos!');
+          } catch {
+            Alert.alert('Erro', 'Não foi possível adicionar aos favoritos.');
+          } finally {
+            setAddingFavId(null);
+          }
         },
-      ]
-    );
+      },
+    ]);
+  };
+
+  // Função para formatar data para dd/mm/yyyy
+  const formatDate = (dateStr) => {
+    if (!dateStr) return 'Data não disponível';
+    const [year, month, day] = dateStr.split('-');
+    return `${day}/${month}/${year}`;
   };
 
   return (
@@ -91,7 +112,15 @@ export default function Home({ navigation }) {
           }}
         />
         {query.length > 0 && (
-          <IconButton icon="close" size={20} onPress={() => { setQuery(''); Keyboard.dismiss(); }} style={styles.clearButton} />
+          <IconButton
+            icon="close"
+            size={20}
+            onPress={() => {
+              setQuery('');
+              Keyboard.dismiss();
+            }}
+            style={styles.clearButton}
+          />
         )}
       </View>
 
@@ -107,15 +136,23 @@ export default function Home({ navigation }) {
         <FlatList
           ref={listRef}
           data={games}
-          keyExtractor={item => String(item.id)}
+          keyExtractor={(item) => String(item.id)}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
             <Card style={styles.card} elevation={3}>
               <Card.Cover source={{ uri: item.background_image }} />
-              <Card.Title title={item.name} />
+              <Card.Title
+                title={item.name}
+                subtitle={`Avaliação: ${item.rating ?? 'N/A'} | Lançamento: ${formatDate(
+                  item.released
+                )}`}
+              />
               <Card.Actions>
-                <Button mode="outlined" onPress={() => navigation.navigate('Details', { id: item.id })}>
+                <Button
+                  mode="outlined"
+                  onPress={() => navigation.navigate('Details', { id: item.id })}
+                >
                   Detalhes
                 </Button>
                 <Button
@@ -155,5 +192,10 @@ const styles = StyleSheet.create({
   card: { marginHorizontal: 12, marginVertical: 6 },
   loading: { marginTop: 20 },
   error: { color: 'red', textAlign: 'center', marginTop: 20 },
-  noResults: { marginTop: 50, textAlign: 'center', fontSize: 16, color: '#777' },
+  noResults: {
+    marginTop: 50,
+    textAlign: 'center',
+    fontSize: 16,
+    color: '#777',
+  },
 });

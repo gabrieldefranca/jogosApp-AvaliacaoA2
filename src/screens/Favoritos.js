@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, FlatList, StyleSheet } from 'react-native';
-import { Card, Button, Text, IconButton, useTheme } from 'react-native-paper';
+import { Card, Button, Text, IconButton, FAB, useTheme } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 
@@ -15,7 +15,7 @@ export default function Favorites({ navigation }) {
   );
 
   async function loadFavorites() {
-    const favs = await AsyncStorage.getItem('favoritos');
+    const favs = await AsyncStorage.getItem('favorites');
     setFavorites(favs ? JSON.parse(favs) : []);
   }
 
@@ -61,13 +61,12 @@ export default function Favorites({ navigation }) {
         )}
       />
 
-      <IconButton
+      <FAB
         icon="delete-sweep"
         style={styles.fab}
         onPress={clearFavorites}
-        size={28}
-        iconColor="#fff"
-        containerColor={colors.error}
+        color="white"
+        customSize={56}
       />
     </View>
   );
@@ -107,7 +106,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 16,
     bottom: 16,
-    borderRadius: 28,
-    elevation: 4,
+    backgroundColor: '#d32f2f',
   },
 });

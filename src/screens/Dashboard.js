@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { View, Dimensions, StyleSheet, ScrollView, Button, Alert } from 'react-native';
-import { Title, Text } from 'react-native-paper';
+import { View, Dimensions, StyleSheet, ScrollView, Alert } from 'react-native';
+import { Title, Text, Button } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PieChart, BarChart } from 'react-native-chart-kit';
 import { useFocusEffect } from '@react-navigation/native';
@@ -42,15 +42,22 @@ export default function Dashboard() {
 
   const clearData = () => {
     Alert.alert(
-      'Limpar Dashboard',
-      'Tem certeza de que deseja limpar os gráficos?',
+      'Limpar Dashboard e Favoritos',
+      'Tem certeza de que deseja limpar os gráficos e os jogos favoritos?',
       [
         { text: 'Cancelar', style: 'cancel' },
         {
           text: 'Sim',
-          onPress: () => {
-            setData([]);
-            setBarData([]);
+          onPress: async () => {
+            try {
+              await AsyncStorage.removeItem('favorites'); // 🔥 Limpa favoritos
+              setData([]);
+              setBarData([]);
+              Alert.alert('Sucesso', 'Dashboard e favoritos foram apagados.');
+            } catch (error) {
+              console.error('Erro ao limpar dados', error);
+              Alert.alert('Erro', 'Não foi possível limpar os dados.');
+            }
           }
         }
       ]
@@ -75,9 +82,16 @@ export default function Dashboard() {
     <ScrollView style={styles.container}>
       <Title style={styles.title}>Dashboard - Jogos Favoritos</Title>
 
-      <Button title="Limpar Dashboard" onPress={clearData} color="#d32f2f" />
+      <Button
+        mode="contained"
+        onPress={clearData}
+        style={styles.button}
+        buttonColor="#d32f2f"
+      >
+        Limpar Dashboard e Favoritos
+      </Button>
 
-      <Text style={styles.subTitle}>Distribuição por Plataforma </Text>
+      <Text style={styles.subTitle}>Distribuição por Plataforma</Text>
       <PieChart
         data={data}
         width={Dimensions.get('window').width - 16}
@@ -89,7 +103,7 @@ export default function Dashboard() {
         absolute
       />
 
-      <Text style={styles.subTitle}>Quantidade por Plataforma </Text>
+      <Text style={styles.subTitle}>Quantidade por Plataforma</Text>
       <BarChart
         data={barData}
         width={Dimensions.get('window').width - 16}
@@ -151,5 +165,8 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  button: {
+    marginVertical: 10,
   },
 });
